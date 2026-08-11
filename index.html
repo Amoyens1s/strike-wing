@@ -116,7 +116,7 @@ body {
 	var OrigAC = window.AudioContext || window.webkitAudioContext;
 	if (OrigAC) {
 		window.AudioContext = function () {
-			var c = new OrigAC.apply(window, arguments);
+			var c = Reflect.construct(OrigAC, arguments, new.target || OrigAC);
 			ctxs.push(c);
 			return c;
 		};

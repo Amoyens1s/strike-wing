@@ -115,14 +115,19 @@ var _cn_font: Font = null
 
 func _get_cn_font() -> Font:
 	if _cn_font == null:
-		var ff := FontFile.new()
-		if ff.load_dynamic_font("res://assets/fonts/ark-pixel-12px-zh_cn.ttf") != OK:
+		var ff := load("res://assets/fonts/ark-pixel-12px-zh_cn.ttf") as Font
+		if ff == null:
+			var dyn := FontFile.new()
+			if dyn.load_dynamic_font("res://assets/fonts/ark-pixel-12px-zh_cn.ttf") == OK:
+				ff = dyn
+		if ff == null:
 			var sf := SystemFont.new()
 			sf.font_names = PackedStringArray(["Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "WenQuanYi Zen Hei"])
-			_cn_font = sf
-		else:
-			ff.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-			_cn_font = ff
+			ff = sf
+		if ff is FontFile:
+			(ff as FontFile).antialiasing = TextServer.FONT_ANTIALIASING_NONE
+			(ff as FontFile).disable_embedded_bitmaps = false
+		_cn_font = ff
 	return _cn_font
 
 func cn_width(text: String, size := 12, scale := 2) -> int:

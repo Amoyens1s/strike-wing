@@ -137,8 +137,8 @@ func _build_select() -> void:
 		var tr := Art.cn_label("", WHITE, 12, 2)
 		select_root.add_child(tr)
 		ship_desc_trs.append(tr)
-	_add(select_root, Art.cn_label("左右方向键 切换战机", CYAN, 12, 2),
-		240 - Art.cn_width("左右方向键 切换战机", 12, 2) / 2.0, 600)
+	_add(select_root, Art.cn_label("点击左右区域 或 方向键 切换战机", CYAN, 12, 2),
+		240 - Art.cn_width("点击左右区域 或 方向键 切换战机", 12, 2) / 2.0, 600)
 	select_back_tr = Art.cn_label("◀ 返回", GRAY, 12, 2)
 	_add(select_root, select_back_tr, 60, 655)
 	select_go_tr = Art.cn_label("出击 ▶", YELLOW, 12, 3)
@@ -304,8 +304,8 @@ func _update_ship_view() -> void:
 		ship_desc_trs[i].position = Vector2(240 - Art.cn_width(line, 12, 2) / 2.0, 470 + i * 32)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch and event.pressed:
-		var p: Vector2 = (event as InputEventScreenTouch).position
+	if _is_press(event):
+		var p := _press_pos(event)
 		if sound_btn_rect.has_point(p):
 			_toggle_sound()
 			return
@@ -326,6 +326,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif Rect2(10, 630, 170, 84).has_point(p):
 					SFX.play("ui_move")
 					_switch(Screen.MENU)
+				elif p.x < 240:
+					ship_idx = (ship_idx + 2) % 3
+					SFX.play("ui_move")
+					_update_ship_view()
+				else:
+					ship_idx = (ship_idx + 1) % 3
+					SFX.play("ui_move")
+					_update_ship_view()
 			Screen.BESTIARY:
 				for i in BESTIARY.size():
 					if Rect2(30, 96 + i * 52, 210, 52).has_point(p):
@@ -411,6 +419,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			if event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel"):
 				SFX.play("ui_move")
 				_switch(Screen.MENU)
+
+func _is_press(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).pressed
+	if event is InputEventMouseButton:
+		return (event as InputEventMouseButton).pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT
+	return false
+
+func _press_pos(event: InputEvent) -> Vector2:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).position
+	return (event as InputEventMouseButton).position
 
 func _menu_confirm(idx: int) -> void:
 	match idx:

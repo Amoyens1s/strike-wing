@@ -27,7 +27,11 @@ var bomb_icon: Texture2D
 var main: Main = null
 var paused := false
 var pause_root: Node2D
+var pause_btn: TextureRect
+var pause_resume_tr: Label
+var pause_quit_tr: Label
 var boss_intro: Node2D
+var bomb_btn: Sprite2D
 
 func _ready() -> void:
 	layer = 10
@@ -58,6 +62,16 @@ func _ready() -> void:
 	_build_boss_bar()
 	_build_banner()
 	_build_pause()
+	pause_btn = Art.make_label("II", CYAN, 2)
+	pause_btn.position = Vector2(480 - 8 - 22, 8)
+	pause_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(pause_btn)
+	bomb_btn = Sprite2D.new()
+	bomb_btn.texture = Art.badge_tex("B")
+	bomb_btn.scale = Vector2(2.0, 2.0)
+	bomb_btn.position = Vector2(434, 656)
+	bomb_btn.z_index = 40
+	add_child(bomb_btn)
 	Game.score_changed.connect(_on_score)
 	Game.lives_changed.connect(_on_lives)
 	Game.bombs_changed.connect(_on_bombs)
@@ -239,11 +253,14 @@ func _build_pause() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pause_root.add_child(dim)
 	var title := Art.cn_label("暂停", YELLOW, 12, 5)
-	title.position = Vector2(240 - Art.cn_width("暂停", 12, 5) / 2.0, 240)
+	title.position = Vector2(240 - Art.cn_width("暂停", 12, 5) / 2.0, 200)
 	pause_root.add_child(title)
-	var hint := Art.cn_label("ESC 继续    回车 返回主菜单", CYAN, 12, 2)
-	hint.position = Vector2(240 - Art.cn_width("ESC 继续    回车 返回主菜单", 12, 2) / 2.0, 400)
-	pause_root.add_child(hint)
+	pause_resume_tr = Art.cn_label("继续游戏", CYAN, 12, 3)
+	pause_resume_tr.position = Vector2(240 - Art.cn_width("继续游戏", 12, 3) / 2.0, 320)
+	pause_root.add_child(pause_resume_tr)
+	pause_quit_tr = Art.cn_label("返回主菜单", GRAY, 12, 2)
+	pause_quit_tr.position = Vector2(240 - Art.cn_width("返回主菜单", 12, 2) / 2.0, 400)
+	pause_root.add_child(pause_quit_tr)
 
 func _set_pause(p: bool) -> void:
 	if paused == p:
@@ -251,9 +268,21 @@ func _set_pause(p: bool) -> void:
 	paused = p
 	get_tree().paused = p
 	pause_root.visible = p
+	bomb_btn.visible = not p and main != null and main.player != null and main.player.alive
 	BGM.set_paused(p)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed:
+		if paused:
+			if _in_rect(event.position, 140, 300, 200, 52):
+				_set_pause(false)
+			elif _in_rect(event.position, 140, 392, 200, 52):
+				_set_pause(false)
+				if main != null:
+					main.exit_to_menu()
+		elif main != null and main.can_pause() and _in_rect(event.position, 440, 0, 40, 32):
+			_set_pause(true)
+		return
 	if event.is_action_pressed("ui_cancel"):
 		if paused:
 			_set_pause(false)
@@ -263,7 +292,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_set_pause(false)
 		main.exit_to_menu()
 
+func _in_rect(pos: Vector2, x: float, y: float, w: float, h: float) -> bool:
+	return pos.x >= x and pos.x <= x + w and pos.y >= y and pos.y <= y + h
+
 func _process(dt: float) -> void:
 	if warning_on:
 		warn_t += dt
 		warning_tr.visible = int(warn_t * 5.0) % 2 == 0
+	if bomb_btn != null and main != null and main.player != null:
+		bomb_btn.visible = main.player.alive

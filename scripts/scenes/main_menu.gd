@@ -62,6 +62,13 @@ var bestiary_name_tr: Label
 var bestiary_desc_trs: Array = []
 var bestiary_drop_tr: Label
 var bestiary_extra_tr: Label
+var sound_btn: Label
+var sound_btn_rect := Rect2(330, 0, 150, 40)
+var select_go_tr: Label
+var select_back_tr: Label
+var bestiary_back_tr: Label
+var ach_back_tr: Label
+var records_back_tr: Label
 
 func _ready() -> void:
 	Pool.reset()
@@ -83,6 +90,7 @@ func _ready() -> void:
 		240 - Art.cn_width("最高分 %07d" % Data.hi, 12, 2) / 2.0, 540)
 	_add(menu_root, Art.cn_label("WASD/方向键 选择   回车 确认", GRAY, 12, 1),
 		240 - Art.cn_width("WASD/方向键 选择   回车 确认", 12, 1) / 2.0, 690)
+	_build_sound_btn()
 	_build_select()
 	_build_bestiary()
 	_build_achievements()
@@ -92,6 +100,24 @@ func _ready() -> void:
 func _add(parent: Node, c: CanvasItem, x: float, y: float) -> void:
 	c.position = Vector2(x, y)
 	parent.add_child(c)
+
+func _build_sound_btn() -> void:
+	sound_btn = Art.cn_label("", YELLOW, 12, 2)
+	add_child(sound_btn)
+	_update_sound_btn()
+
+func _update_sound_btn() -> void:
+	var txt := "声音 开" if not Data.muted else "声音 关"
+	Art.set_cn_label(sound_btn, txt, YELLOW if not Data.muted else GRAY, 12, 2)
+	sound_btn.position = Vector2(480 - 8 - Art.cn_width(txt, 12, 2), 8)
+
+func _toggle_sound() -> void:
+	Data.muted = not Data.muted
+	Data.save_now()
+	BGM.refresh()
+	if not Data.muted:
+		SFX.play("ui_ok")
+	_update_sound_btn()
 
 func _build_select() -> void:
 	select_root = Node2D.new()
@@ -113,14 +139,18 @@ func _build_select() -> void:
 		ship_desc_trs.append(tr)
 	_add(select_root, Art.cn_label("左右方向键 切换战机", CYAN, 12, 2),
 		240 - Art.cn_width("左右方向键 切换战机", 12, 2) / 2.0, 600)
-	_add(select_root, Art.cn_label("回车 出击    ESC 返回", GRAY, 12, 1),
-		240 - Art.cn_width("回车 出击    ESC 返回", 12, 1) / 2.0, 688)
+	select_back_tr = Art.cn_label("◀ 返回", GRAY, 12, 2)
+	_add(select_root, select_back_tr, 60, 655)
+	select_go_tr = Art.cn_label("出击 ▶", YELLOW, 12, 3)
+	_add(select_root, select_go_tr, 360, 648)
 
 func _build_bestiary() -> void:
 	bestiary_root = Node2D.new()
 	bestiary_root.visible = false
 	add_child(bestiary_root)
 	_add(bestiary_root, Art.cn_label("敌人图鉴", YELLOW, 12, 3), 240 - Art.cn_width("敌人图鉴", 12, 3) / 2.0, 46)
+	bestiary_back_tr = Art.cn_label("◀ 返回", GRAY, 12, 2)
+	_add(bestiary_root, bestiary_back_tr, 60, 655)
 	for i in BESTIARY.size():
 		var e: Dictionary = BESTIARY[i]
 		var icon := Sprite2D.new()
@@ -185,6 +215,8 @@ func _build_achievements() -> void:
 	ach_root.visible = false
 	add_child(ach_root)
 	_add(ach_root, Art.cn_label("成就", YELLOW, 12, 3), 240 - Art.cn_width("成就", 12, 3) / 2.0, 46)
+	ach_back_tr = Art.cn_label("◀ 返回", GRAY, 12, 2)
+	_add(ach_root, ach_back_tr, 60, 655)
 	ach_progress = Art.cn_label("", RED, 12, 2)
 	ach_progress.position = Vector2(240 - Art.cn_width("已解锁 0 / 26", 12, 2) / 2.0, 92)
 	ach_root.add_child(ach_progress)
@@ -236,6 +268,8 @@ func _build_records() -> void:
 	records_root.visible = false
 	add_child(records_root)
 	_add(records_root, Art.cn_label("历史记录", YELLOW, 12, 3), 240 - Art.cn_width("历史记录", 12, 3) / 2.0, 50)
+	records_back_tr = Art.cn_label("◀ 返回", GRAY, 12, 2)
+	_add(records_root, records_back_tr, 60, 655)
 	_add(records_root, Art.cn_label("最高分 %07d" % Data.hi, RED, 12, 2),
 		240 - Art.cn_width("最高分 %07d" % Data.hi, 12, 2) / 2.0, 100)
 	var records_panel := Art.ui_panel(Vector2(440, 350), Color(0.14, 0.18, 0.32, 0.62))
@@ -271,17 +305,54 @@ func _update_ship_view() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and event.pressed:
-		SFX.play("ui_ok")
+		var p: Vector2 = (event as InputEventScreenTouch).position
+		if sound_btn_rect.has_point(p):
+			_toggle_sound()
+			return
 		match screen:
 			Screen.MENU:
-				ship_idx = 0
-				_update_ship_view()
-				_switch(Screen.SELECT)
+				for i in MENU_ITEMS.size():
+					if Rect2(100, 292 + i * 40, 280, 44).has_point(p):
+						menu_idx = i
+						_update_cursor()
+						SFX.play("ui_ok")
+						_menu_confirm(menu_idx)
+						return
 			Screen.SELECT:
-				Game.start_run(ship_idx)
-				get_tree().change_scene_to_file("res://scenes/main.tscn")
-			_:
-				_switch(Screen.MENU)
+				if Rect2(330, 630, 140, 84).has_point(p):
+					SFX.play("ui_ok")
+					Game.start_run(ship_idx)
+					get_tree().change_scene_to_file("res://scenes/main.tscn")
+				elif Rect2(10, 630, 170, 84).has_point(p):
+					SFX.play("ui_move")
+					_switch(Screen.MENU)
+			Screen.BESTIARY:
+				for i in BESTIARY.size():
+					if Rect2(30, 96 + i * 52, 210, 52).has_point(p):
+						if i != bestiary_idx:
+							bestiary_idx = i
+							SFX.play("ui_move")
+							_update_bestiary_view()
+						return
+				if Rect2(10, 630, 170, 84).has_point(p):
+					SFX.play("ui_move")
+					_switch(Screen.MENU)
+			Screen.ACHIEVEMENTS:
+				if Rect2(10, 630, 170, 84).has_point(p):
+					SFX.play("ui_move")
+					_switch(Screen.MENU)
+				elif p.x < 240:
+					ach_page -= 1
+					SFX.play("ui_move")
+					_update_achievements()
+				else:
+					ach_page += 1
+					SFX.play("ui_move")
+					_update_achievements()
+			Screen.RECORDS:
+				if Rect2(10, 630, 170, 84).has_point(p):
+					SFX.play("ui_move")
+					_switch(Screen.MENU)
 		return
 	match screen:
 		Screen.MENU:
@@ -295,17 +366,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_update_cursor()
 			elif event.is_action_pressed("ui_accept"):
 				SFX.play("ui_ok")
-				match menu_idx:
-					0, 1:
-						ship_idx = 0
-						_update_ship_view()
-						_switch(Screen.SELECT)
-					2:
-						_switch(Screen.BESTIARY)
-					3:
-						_switch(Screen.ACHIEVEMENTS)
-					4:
-						_switch(Screen.RECORDS)
+				_menu_confirm(menu_idx)
 		Screen.ACHIEVEMENTS:
 			if event.is_action_pressed("ui_left"):
 				ach_page -= 1
@@ -350,6 +411,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			if event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel"):
 				SFX.play("ui_move")
 				_switch(Screen.MENU)
+
+func _menu_confirm(idx: int) -> void:
+	match idx:
+		0, 1:
+			ship_idx = 0
+			_update_ship_view()
+			_switch(Screen.SELECT)
+		2:
+			_switch(Screen.BESTIARY)
+		3:
+			_switch(Screen.ACHIEVEMENTS)
+		4:
+			_switch(Screen.RECORDS)
 
 func _switch(to: Screen) -> void:
 	screen = to

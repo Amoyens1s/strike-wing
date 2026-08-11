@@ -96,6 +96,9 @@ func play_track(id: String) -> void:
 	if id == _current and player.playing:
 		return
 	_current = id
+	if Data.muted:
+		player.stop()
+		return
 	var s: AudioStreamWAV = _cache.get(id)
 	if s == null:
 		s = _render(TRACKS.get(id, TRACKS["menu"]))
@@ -106,6 +109,12 @@ func play_track(id: String) -> void:
 func stop() -> void:
 	player.stop()
 	_current = ""
+
+func refresh() -> void:
+	if Data.muted:
+		player.stop()
+	elif _current != "" and not player.playing:
+		player.play()
 
 func set_paused(p: bool) -> void:
 	player.stream_paused = p

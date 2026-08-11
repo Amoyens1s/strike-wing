@@ -26,6 +26,8 @@ func _ensure_bus(bus_name: String) -> void:
 		AudioServer.set_bus_send(i, "Master")
 
 func play(sfx_name: String) -> void:
+	if Data.muted:
+		return
 	var now := Time.get_ticks_msec() / 1000.0
 	if _last.get(sfx_name, -99.0) + THROTTLE.get(sfx_name, 0.0) > now:
 		return

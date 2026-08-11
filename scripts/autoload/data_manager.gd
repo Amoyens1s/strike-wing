@@ -6,6 +6,7 @@ const MAX_RUNS := 30
 var hi := 0
 var runs: Array = []
 var ach := {}
+var muted := false
 
 func _ready() -> void:
 	_load()
@@ -22,7 +23,7 @@ func add_run(r: Dictionary) -> void:
 func save_now() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f:
-		f.store_string(JSON.stringify({"hi": hi, "runs": runs, "ach": ach}))
+		f.store_string(JSON.stringify({"hi": hi, "runs": runs, "ach": ach, "muted": muted}))
 
 func _load() -> void:
 	if not FileAccess.file_exists(PATH):
@@ -35,3 +36,4 @@ func _load() -> void:
 		hi = int(data.get("hi", 0))
 		runs = data.get("runs", [])
 		ach = data.get("ach", {})
+		muted = bool(data.get("muted", false))

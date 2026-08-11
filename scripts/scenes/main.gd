@@ -233,7 +233,7 @@ func _win() -> void:
 		{"text": "得分 %07d" % Game.score, "color": HUD.WHITE, "scale": 2},
 		{"text": "用时 %d 秒" % int(Game.run_time), "color": HUD.WHITE, "scale": 2},
 		{"text": "阵亡 %d 次" % Game.deaths, "color": HUD.WHITE, "scale": 2},
-		{"text": "按回车返回", "color": HUD.CYAN, "scale": 2},
+		{"text": "点击或回车返回", "color": HUD.CYAN, "scale": 2},
 	])
 
 func _on_player_died() -> void:
@@ -256,7 +256,7 @@ func _game_over() -> void:
 		{"text": "游戏结束", "color": HUD.RED, "scale": 5},
 		{"text": "得分 %07d" % Game.score, "color": HUD.WHITE, "scale": 2},
 		{"text": "第 %d 关" % stage, "color": HUD.WHITE, "scale": 2},
-		{"text": "按回车返回", "color": HUD.CYAN, "scale": 2},
+		{"text": "点击或回车返回", "color": HUD.CYAN, "scale": 2},
 	])
 
 func _record_run(clear: bool) -> void:
@@ -270,6 +270,10 @@ func _record_run(clear: bool) -> void:
 	})
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed:
+		if state == State.OVER or state == State.WIN:
+			exit_to_menu()
+		return
 	if event.is_action_pressed("bomb"):
 		if state == State.OVER or state == State.WIN:
 			exit_to_menu()

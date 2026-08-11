@@ -91,13 +91,16 @@ func _ready() -> void:
 	player.bus = "BGM"
 	player.volume_db = -4.0
 	add_child(player)
+	print("[BGM] ready driver=", AudioServer.get_driver_name(), " muted=", Data.muted)
 
 func play_track(id: String) -> void:
+	print("[BGM] play_track(", id, ") current=", _current, " playing=", player.playing, " muted=", Data.muted)
 	if id == _current and player.playing:
 		return
 	_current = id
 	if Data.muted:
 		player.stop()
+		print("[BGM] muted, stop")
 		return
 	var s: AudioStreamWAV = _cache.get(id)
 	if s == null:
@@ -105,16 +108,24 @@ func play_track(id: String) -> void:
 		_cache[id] = s
 	player.stream = s
 	player.play()
+	print("[BGM] play() -> playing=", player.playing)
 
 func stop() -> void:
 	player.stop()
 	_current = ""
 
 func refresh() -> void:
+	print("[BGM] refresh muted=", Data.muted, " current=", _current, " playing=", player.playing)
 	if Data.muted:
 		player.stop()
 	elif _current != "" and not player.playing:
+		var s: AudioStreamWAV = _cache.get(_current)
+		if s == null:
+			s = _render(TRACKS.get(_current, TRACKS["menu"]))
+			_cache[_current] = s
+		player.stream = s
 		player.play()
+		print("[BGM] refresh -> play() stream=", s != null)
 
 func set_paused(p: bool) -> void:
 	player.stream_paused = p

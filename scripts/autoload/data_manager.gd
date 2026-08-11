@@ -6,7 +6,7 @@ const MAX_RUNS := 30
 var hi := 0
 var runs: Array = []
 var ach := {}
-var muted := false
+var muted := true
 
 func _ready() -> void:
 	_load()
@@ -36,4 +36,4 @@ func _load() -> void:
 		hi = int(data.get("hi", 0))
 		runs = data.get("runs", [])
 		ach = data.get("ach", {})
-		muted = bool(data.get("muted", false))
+		muted = bool(data.get("muted", true))

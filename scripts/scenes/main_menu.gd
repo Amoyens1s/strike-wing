@@ -72,7 +72,9 @@ var records_back_tr: Label
 
 func _ready() -> void:
 	Pool.reset()
+	print("[MENU] _ready, BGM.play_track(\"menu\")")
 	BGM.play_track("menu")
+	print("[MENU] after play_track, muted=", Data.muted)
 	var bg := Background.new()
 	add_child(bg)
 	bg.set_theme("space")
@@ -112,12 +114,14 @@ func _update_sound_btn() -> void:
 	sound_btn.position = Vector2(480 - 8 - Art.cn_width(txt, 12, 2), 8)
 
 func _toggle_sound() -> void:
+	print("[MENU] toggle muted=", Data.muted)
 	Data.muted = not Data.muted
 	Data.save_now()
 	BGM.refresh()
 	if not Data.muted:
 		SFX.play("ui_ok")
 	_update_sound_btn()
+	print("[MENU] toggle -> muted=", Data.muted)
 
 func _build_select() -> void:
 	select_root = Node2D.new()

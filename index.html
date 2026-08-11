@@ -109,39 +109,9 @@ body {
 			<div id="status-notice"></div>
 		</div>
 
-		<script>
-(function () {
-	// 强制音频解锁：捕获页面所有 AudioContext，任意用户手势时 resume
-	var ctxs = [];
-	var OrigAC = window.AudioContext || window.webkitAudioContext;
-	if (OrigAC) {
-		window.AudioContext = function () {
-			var c = Reflect.construct(OrigAC, arguments, new.target || OrigAC);
-			ctxs.push(c);
-			return c;
-		};
-		window.AudioContext.prototype = OrigAC.prototype;
-		if (window.webkitAudioContext) {
-			window.webkitAudioContext = window.AudioContext;
-		}
-	}
-	function unlock() {
-		for (var i = 0; i < ctxs.length; i++) {
-			var c = ctxs[i];
-			if (c.state === 'suspended') {
-				c.resume()['catch'](function () {});
-			}
-		}
-	}
-	['pointerdown', 'mousedown', 'touchstart', 'keydown', 'touchend'].forEach(function (ev) {
-		window.addEventListener(ev, unlock, true);
-	});
-	document.addEventListener('visibilitychange', unlock);
-})();
-		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":1667444,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":1668540,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 

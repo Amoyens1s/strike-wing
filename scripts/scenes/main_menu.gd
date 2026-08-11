@@ -270,6 +270,19 @@ func _update_ship_view() -> void:
 		ship_desc_trs[i].position = Vector2(240 - Art.cn_width(line, 12, 2) / 2.0, 470 + i * 32)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed:
+		SFX.play("ui_ok")
+		match screen:
+			Screen.MENU:
+				ship_idx = 0
+				_update_ship_view()
+				_switch(Screen.SELECT)
+			Screen.SELECT:
+				Game.start_run(ship_idx)
+				get_tree().change_scene_to_file("res://scenes/main.tscn")
+			_:
+				_switch(Screen.MENU)
+		return
 	match screen:
 		Screen.MENU:
 			if event.is_action_pressed("ui_up"):

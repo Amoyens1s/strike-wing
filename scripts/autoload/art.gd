@@ -115,10 +115,12 @@ var _cn_font: Font = null
 
 func _get_cn_font() -> Font:
 	if _cn_font == null:
-		var ff := load("res://assets/fonts/ark-pixel-12px-zh_cn.ttf") as Font
+		var path := "res://assets/fonts/ark-pixel-12px-zh_cn.otf" if OS.has_feature("web") \
+			else "res://assets/fonts/ark-pixel-12px-zh_cn.ttf"
+		var ff := load(path) as Font
 		if ff == null:
 			var dyn := FontFile.new()
-			if dyn.load_dynamic_font("res://assets/fonts/ark-pixel-12px-zh_cn.ttf") == OK:
+			if dyn.load_dynamic_font(path) == OK:
 				ff = dyn
 		if ff == null:
 			var sf := SystemFont.new()

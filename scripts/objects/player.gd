@@ -2,6 +2,7 @@ class_name Player
 extends Area2D
 
 signal died
+signal bomb_requested
 
 const SPEED := 250.0
 const BOUNDS := Rect2(20, 20, 440, 680)
@@ -17,6 +18,11 @@ var body: Node2D
 var sprite: Sprite2D
 var flame: Sprite2D
 var shield_spr: Sprite2D
+var touch_id := -1
+var touch_center := Vector2.ZERO
+var touch_dir := Vector2.ZERO
+var joy_base: Sprite2D
+var joy_knob: Sprite2D
 
 func _ready() -> void:
 	add_to_group("player")
@@ -43,7 +49,43 @@ func _ready() -> void:
 	c.radius = 6.0
 	sh.shape = c
 	add_child(sh)
+	joy_base = Sprite2D.new()
+	joy_base.texture = Art.ring_tex(64)
+	joy_base.scale = Vector2(0.7, 0.7)
+	joy_base.visible = false
+	joy_base.z_index = 30
+	add_child(joy_base)
+	joy_knob = Sprite2D.new()
+	joy_knob.texture = Art.glow_tex(24)
+	joy_knob.modulate = Color(1.6, 1.6, 1.6)
+	joy_knob.visible = false
+	joy_knob.z_index = 30
+	add_child(joy_knob)
 	position = Vector2(240, 620)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed and event.index == 0:
+			var w := get_viewport().get_visible_rect().size.x
+			if event.position.x < w * 0.6:
+				touch_id = event.index
+				touch_center = event.position
+				touch_dir = Vector2.ZERO
+				joy_base.position = event.position
+				joy_knob.position = event.position
+				joy_base.visible = true
+				joy_knob.visible = true
+			else:
+				bomb_requested.emit()
+		elif not event.pressed and event.index == touch_id:
+			touch_id = -1
+			touch_dir = Vector2.ZERO
+			joy_base.visible = false
+			joy_knob.visible = false
+	elif event is InputEventScreenDrag and event.index == touch_id:
+		var d: Vector2 = event.position - touch_center
+		touch_dir = (d / 60.0).limit_length(1.0)
+		joy_knob.position = touch_center + touch_dir * 42.0
 
 func _exit_tree() -> void:
 	if Game.player == self:
@@ -53,6 +95,8 @@ func _process(dt: float) -> void:
 	if not alive:
 		return
 	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if touch_id != -1:
+		dir = touch_dir
 	position += dir * SPEED * dt
 	position.x = clampf(position.x, BOUNDS.position.x, BOUNDS.end.x)
 	position.y = clampf(position.y, BOUNDS.position.y, BOUNDS.end.y)

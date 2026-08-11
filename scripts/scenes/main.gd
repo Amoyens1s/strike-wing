@@ -38,6 +38,7 @@ func _ready() -> void:
 	player = Player.new()
 	add_child(player)
 	player.died.connect(_on_player_died)
+	player.bomb_requested.connect(_use_bomb)
 	hud = HUD.new()
 	add_child(hud)
 	hud.main = self

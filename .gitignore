@@ -1,6 +1,9 @@
 # Godot 4 编辑器缓存
 .godot/
 
+# Web 导出产物（独立 gh-pages 仓库管理）
+build/
+
 # 系统
 .DS_Store
 Thumbs.db

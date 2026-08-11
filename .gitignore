@@ -4,6 +4,9 @@
 # Web 导出产物（独立 gh-pages 仓库管理）
 build/
 
+# 本地 AI 工作记忆（不入库）
+.codebuddy/
+
 # 系统
 .DS_Store
 Thumbs.db
